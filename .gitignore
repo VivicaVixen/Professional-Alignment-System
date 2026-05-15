@@ -27,9 +27,13 @@ Thumbs.db
 
 # Project runtime/data
 data/*.json
+data/vacancies/*.json
 !data/.gitkeep
 runtime/
 *.log
+
+# Project docs
+LinkedIn_Proyecto_PAS.md
 
 # Secrets
 *.key
