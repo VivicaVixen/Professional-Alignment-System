@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Cover Letter - {{ name }}</title>
+    <style>
+        body {
+            font-family: 'Consolas', 'Courier New', monospace;
+            line-height: 1.6;
+            color: #333;
+            max-width: 750px;
+            margin: 0 auto;
+            padding: 50px;
+            background: #f5f5f5;
+        }
+        .letter-container {
+            background: white;
+            padding: 40px;
+            border: 1px solid #ddd;
+        }
+        .header {
+            margin-bottom: 30px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #0d7377;
+        }
+        .sender-info h1 {
+            color: #0d7377;
+            margin: 0 0 10px 0;
+            font-size: 22px;
+            font-family: 'Segoe UI', sans-serif;
+        }
+        .sender-info p {
+            margin: 3px 0;
+            font-size: 13px;
+            color: #666;
+        }
+        .date {
+            color: #999;
+            font-size: 13px;
+        }
+        .salutation {
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+        .body-paragraph {
+            margin-bottom: 15px;
+        }
+        .closing {
+            margin-top: 30px;
+        }
+        .signature {
+            margin-top: 20px;
+            font-weight: bold;
+            color: #0d7377;
+        }
+        .tech-highlight {
+            background: #f0f8f8;
+            padding: 10px;
+            border-left: 3px solid #0d7377;
+            margin: 15px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="letter-container">
+        <div class="header">
+            <div class="sender-info">
+                <h1>{{ name }}</h1>
+                {% if email %}<p>Email: {{ email }}</p>{% endif %}
+                {% if phone %}<p>Phone: {{ phone }}</p>{% endif %}
+                {% if linkedin %}<p>LinkedIn: {{ linkedin }}</p>{% endif %}
+            </div>
+            <div class="date">
+                <p>{{ date }}</p>
+            </div>
+        </div>
+
+        <div class="salutation">
+            <p>Dear Technical Hiring Manager,</p>
+        </div>
+
+        <div class="letter-body">
+            {% for paragraph in paragraphs %}
+            <p>{{ paragraph }}</p>
+            {% endfor %}
+        </div>
+
+        <div class="closing">
+            <p>Thank you for reviewing my application. I am eager to bring my technical expertise and problem-solving skills to your engineering team.</p>
+            <p>Regards,</p>
+            <div class="signature">
+                <p>{{ name }}</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

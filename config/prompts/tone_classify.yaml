@@ -1,0 +1,49 @@
+name: tone_classify
+version: 2
+model_role: qwen
+temperature: 0.2
+top_p: 0.9
+num_predict: 128
+variants:
+  en:
+    system: |
+      You are a communication tone classifier for professional career documents.
+    user: |
+      Based on this job vacancy, select the most appropriate communication tone for generating
+      a CV and cover letter.
+
+      Available tones:
+      - corporate_executive: Formal, leadership-focused, strategic
+      - technical_engineering: Skills-heavy, tool-oriented, technical depth
+      - compliance_risk: Regulatory, audit-focused, detail-oriented
+      - operations_projects: Delivery-focused, metrics-driven, results-oriented
+      - fintech_digital: Innovation, startup-style, modern
+      - social_impact_mission: Purpose-driven, values-focused, mission-oriented
+
+      VACANCY:
+      Title: {job_title}
+      Domain: {domain}
+      Keywords: {keywords}
+
+      Return ONLY the tone identifier (e.g., corporate_executive), nothing else.
+  es:
+    system: |
+      Eres un clasificador de tono comunicativo para documentos profesionales de carrera.
+    user: |
+      Basándote en esta oferta de trabajo, selecciona el tono comunicativo más apropiado
+      para generar un CV y una carta de presentación.
+
+      Tonos disponibles:
+      - corporate_executive: Formal, orientado al liderazgo, estratégico
+      - technical_engineering: Con énfasis en habilidades técnicas y herramientas
+      - compliance_risk: Regulatorio, centrado en auditoría, orientado al detalle
+      - operations_projects: Orientado a la entrega, basado en métricas, enfocado en resultados
+      - fintech_digital: Innovador, estilo startup, moderno
+      - social_impact_mission: Impulsado por un propósito, centrado en valores y misión
+
+      OFERTA:
+      Título: {job_title}
+      Sector: {domain}
+      Palabras clave: {keywords}
+
+      Devuelve ÚNICAMENTE el identificador de tono (p.ej., corporate_executive), nada más.

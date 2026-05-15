@@ -1,0 +1,19 @@
+{
+  "ollama": {
+    "base_url": "http://localhost:8080",
+    "models": {
+      "qwen_coder": "qwen2.5-coder:7b",
+      "deepseek": "deepseek-r1:7b"
+    },
+    "parameters": {
+      "temperature": 0.7,
+      "top_p": 0.9,
+      "num_predict": 4096
+    }
+  },
+  "defaults": {
+    "tone": "technical_engineering",
+    "cv_template": "cv_modern",
+    "cl_template": "cl_modern"
+  }
+}

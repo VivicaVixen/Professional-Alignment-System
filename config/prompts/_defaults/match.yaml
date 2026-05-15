@@ -1,0 +1,71 @@
+name: match
+version: 2
+model_role: qwen
+temperature: 0.3
+top_p: 0.9
+num_predict: 2048
+variants:
+  en:
+    system: |
+      You are a career alignment analyst. Compare job vacancy requirements against candidate profiles to identify strong points and gaps.
+    user: |
+      Compare the following job vacancy requirements against the candidate's profile.
+
+      Identify:
+      1. STRONG POINTS: Where the candidate's experience/skills match or exceed vacancy requirements
+      2. GAPS: Where the candidate lacks experience, skills, or qualifications mentioned in the vacancy
+
+      VACANCY DATA:
+      {vacancy_data}
+
+      CANDIDATE PROFILE:
+      {profile_data}
+
+      Return ONLY a valid JSON object with this structure:
+      {{
+        "strong_points": [
+          {{
+            "vacancy_term": "specific requirement from vacancy",
+            "profile_evidence": "matching evidence from profile",
+            "rationale": "brief explanation of the match"
+          }}
+        ],
+        "gaps": [
+          "specific gap or missing qualification"
+        ],
+        "alignment_score": "a number from 0-100 representing overall alignment"
+      }}
+
+      Return ONLY the JSON object, nothing else.
+  es:
+    system: |
+      Eres un analista de alineación profesional. Compara los requisitos de ofertas de empleo con perfiles de candidatos para identificar puntos fuertes y brechas.
+    user: |
+      Compara los requisitos de la siguiente oferta de trabajo con el perfil del candidato.
+
+      Identifica:
+      1. PUNTOS FUERTES: Donde la experiencia/habilidades del candidato coinciden o superan los requisitos de la oferta
+      2. BRECHAS: Donde el candidato carece de experiencia, habilidades o cualificaciones mencionadas en la oferta
+
+      DATOS DE LA OFERTA:
+      {vacancy_data}
+
+      PERFIL DEL CANDIDATO:
+      {profile_data}
+
+      Devuelve ÚNICAMENTE un objeto JSON válido con esta estructura:
+      {{
+        "strong_points": [
+          {{
+            "vacancy_term": "requisito específico de la oferta",
+            "profile_evidence": "evidencia coincidente del perfil",
+            "rationale": "breve explicación de la coincidencia"
+          }}
+        ],
+        "gaps": [
+          "brecha o cualificación ausente específica"
+        ],
+        "alignment_score": "número del 0 al 100 que representa la alineación global"
+      }}
+
+      Devuelve ÚNICAMENTE el objeto JSON, nada más.

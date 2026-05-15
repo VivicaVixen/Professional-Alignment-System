@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Cover Letter - {{ name }}</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.7;
+            color: #333;
+            max-width: 700px;
+            margin: 0 auto;
+            padding: 50px;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 3px solid #0066cc;
+        }
+        .sender-info h1 {
+            color: #0066cc;
+            margin: 0 0 10px 0;
+            font-size: 24px;
+        }
+        .sender-info p {
+            margin: 3px 0;
+            font-size: 14px;
+            color: #666;
+        }
+        .date {
+            color: #888;
+            font-size: 14px;
+        }
+        .salutation {
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+        .body-paragraph {
+            margin-bottom: 15px;
+        }
+        .closing {
+            margin-top: 30px;
+        }
+        .signature {
+            margin-top: 20px;
+            font-weight: 600;
+            color: #0066cc;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="sender-info">
+            <h1>{{ name }}</h1>
+            {% if email %}<p>{{ email }}</p>{% endif %}
+            {% if phone %}<p>{{ phone }}</p>{% endif %}
+            {% if linkedin %}<p>{{ linkedin }}</p>{% endif %}
+        </div>
+        <div class="date">
+            <p>{{ date }}</p>
+        </div>
+    </div>
+
+    <div class="salutation">
+        <p>Dear Hiring Team,</p>
+    </div>
+
+    <div class="letter-body">
+        {% for paragraph in paragraphs %}
+        <p>{{ paragraph }}</p>
+        {% endfor %}
+    </div>
+
+    <div class="closing">
+        <p>Thank you for your time and consideration. I would welcome the opportunity to discuss how my background can contribute to your organization's success.</p>
+        <p>Best regards,</p>
+        <div class="signature">
+            <p>{{ name }}</p>
+        </div>
+    </div>
+</body>
+</html>

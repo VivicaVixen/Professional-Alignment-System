@@ -1,0 +1,257 @@
+{
+  "handoff_version": "1.0",
+  "created": "2026-05-12",
+  "executor": "qwen2.5-coder (VS Code agent mode)",
+  "delegated_by": "Claude (Cowork)",
+  "project": "PAS - Professional Alignment System",
+
+  "objective": "Migrar la inferencia local de PAS desde Ollama (que cae a CPU porque ROCm no soporta Polaris/RX 580 en Windows) a llama.cpp con backend Vulkan, orquestado por llama-swap, manteniendo compatibilidad con el codigo Python existente que usa ollama.chat().",
+
+  "context": {
+    "hardware": {
+      "os": "Windows 10/11 x64",
+      "gpu": "AMD Radeon RX 580 8 GB (Polaris, gfx803)",
+      "vram_gb": 8,
+      "cpu_fallback_unacceptable": true
+    },
+    "current_stack": {
+      "inference_server": "Ollama (puerto 11434)",
+      "models": ["qwen2.5-coder:7b", "deepseek-r1:7b"],
+      "client_lib": "ollama (Python)",
+      "problem": "Ollama usa ROCm en Windows, ROCm no soporta Polaris -> inferencia en CPU"
+    },
+    "target_stack": {
+      "inference_engine": "llama.cpp server (build Vulkan, Windows x64)",
+      "proxy": "llama-swap (carga modelos bajo demanda en una sola GPU)",
+      "endpoint_proxy": "http://localhost:8080 (compatible OpenAI)",
+      "models_format": "GGUF Q4_K_M",
+      "client_shim": "Adaptador Python que conserva la firma ollama.chat() pero llama a /v1/chat/completions"
+    },
+    "why_llama_swap": "Dos modelos 7B Q4_K_M (~4.5 GB cada uno) no caben simultaneos en 8 GB de VRAM. llama-swap mantiene un endpoint unico y hace hot-swap del modelo segun el campo 'model' del request."
+  },
+
+  "constraints": [
+    "NO migrar a Linux ni WSL2.",
+    "NO instalar ROCm (no soporta Polaris).",
+    "Cambios minimos en el codigo PAS existente: idealmente un solo modulo nuevo (shim) y un import diferente.",
+    "El usuario debe poder revertir a Ollama desactivando el shim (mantener flag de configuracion).",
+    "Verificar uso real de GPU al final (no asumir que funciona porque no dio error)."
+  ],
+
+  "working_directory": "C:\\Users\\melet\\Documents\\Professional-Alignment-System-PAS-",
+  "install_directory": "C:\\Users\\melet\\Documents\\Professional-Alignment-System-PAS-\\runtime",
+
+  "phases": [
+    {
+      "id": "phase-1-discovery",
+      "goal": "Inventariar el codigo PAS actual y confirmar que Vulkan esta disponible en la GPU.",
+      "steps": [
+        {
+          "action": "grep_workspace",
+          "pattern": "ollama\\.chat|from ollama|import ollama",
+          "purpose": "Localizar todas las llamadas a Ollama en el codigo PAS. Listar archivos y lineas."
+        },
+        {
+          "action": "read_file",
+          "target": "Cualquier archivo de configuracion (config.py, settings.py, .env, config.yaml) del proyecto",
+          "purpose": "Detectar como se configuran hoy los endpoints y nombres de modelo."
+        },
+        {
+          "action": "shell",
+          "command": "vulkaninfo --summary",
+          "expected": "Que liste 'AMD Radeon RX 580' como GPU Vulkan. Si vulkaninfo no existe, instalar Vulkan Runtime: https://vulkan.lunarg.com/sdk/home#windows (solo Runtime, no SDK completo).",
+          "on_failure": "Reportar al usuario y detener. NO continuar sin Vulkan funcional."
+        }
+      ],
+      "acceptance": [
+        "Lista completa de llamadas ollama.chat() con archivo:linea.",
+        "Confirmacion de RX 580 como dispositivo Vulkan activo."
+      ]
+    },
+
+    {
+      "id": "phase-2-download-binaries",
+      "goal": "Descargar y descomprimir llama.cpp (Vulkan) y llama-swap.",
+      "steps": [
+        {
+          "action": "shell",
+          "command": "mkdir C:\\Users\\melet\\Documents\\Professional-Alignment-System-PAS-\\runtime\\llamacpp & mkdir C:\\Users\\melet\\Documents\\Professional-Alignment-System-PAS-\\runtime\\llamaswap & mkdir C:\\Users\\melet\\Documents\\Professional-Alignment-System-PAS-\\runtime\\models"
+        },
+        {
+          "action": "fetch_latest_release",
+          "repo": "ggml-org/llama.cpp",
+          "asset_pattern": "llama-*-bin-win-vulkan-x64.zip",
+          "extract_to": "runtime\\llamacpp",
+          "verify_binary": "runtime\\llamacpp\\llama-server.exe"
+        },
+        {
+          "action": "fetch_latest_release",
+          "repo": "mostlygeek/llama-swap",
+          "asset_pattern": "llama-swap_*_windows_amd64.zip",
+          "extract_to": "runtime\\llamaswap",
+          "verify_binary": "runtime\\llamaswap\\llama-swap.exe"
+        }
+      ],
+      "acceptance": [
+        "runtime\\llamacpp\\llama-server.exe existe y responde a --version",
+        "runtime\\llamaswap\\llama-swap.exe existe"
+      ]
+    },
+
+    {
+      "id": "phase-3-download-models",
+      "goal": "Descargar los GGUF de los dos modelos que PAS usa hoy.",
+      "notes": "Los blobs de Ollama estan en %USERPROFILE%\\.ollama\\models\\blobs pero con nombres hash; es mas seguro re-descargar desde Hugging Face que intentar mapear los blobs.",
+      "steps": [
+        {
+          "action": "download",
+          "url": "https://huggingface.co/bartowski/Qwen2.5-Coder-7B-Instruct-GGUF/resolve/main/Qwen2.5-Coder-7B-Instruct-Q4_K_M.gguf",
+          "save_as": "runtime\\models\\qwen2.5-coder-7b-instruct-q4_k_m.gguf",
+          "expected_size_gb_approx": 4.7
+        },
+        {
+          "action": "download",
+          "url": "https://huggingface.co/bartowski/DeepSeek-R1-Distill-Qwen-7B-GGUF/resolve/main/DeepSeek-R1-Distill-Qwen-7B-Q4_K_M.gguf",
+          "save_as": "runtime\\models\\deepseek-r1-distill-qwen-7b-q4_k_m.gguf",
+          "expected_size_gb_approx": 4.7,
+          "note": "El 'deepseek-r1:7b' de Ollama es en realidad la version Distill-Qwen-7B."
+        }
+      ],
+      "acceptance": [
+        "Ambos archivos .gguf existen en runtime\\models con tamanos > 4 GB."
+      ]
+    },
+
+    {
+      "id": "phase-4-configure-llama-swap",
+      "goal": "Crear el config.yaml de llama-swap con los dos modelos.",
+      "steps": [
+        {
+          "action": "write_file",
+          "path": "runtime\\llamaswap\\config.yaml",
+          "content_template": "healthCheckTimeout: 120\n\nmodels:\n  \"qwen2.5-coder:7b\":\n    cmd: |\n      C:\\Users\\melet\\Documents\\Professional-Alignment-System-PAS-\\runtime\\llamacpp\\llama-server.exe\n      -m C:\\Users\\melet\\Documents\\Professional-Alignment-System-PAS-\\runtime\\models\\qwen2.5-coder-7b-instruct-q4_k_m.gguf\n      --host 127.0.0.1\n      --port ${PORT}\n      -ngl 99\n      -c 8192\n      --no-mmap\n    proxy: http://127.0.0.1:${PORT}\n    ttl: 600\n\n  \"deepseek-r1:7b\":\n    cmd: |\n      C:\\Users\\melet\\Documents\\Professional-Alignment-System-PAS-\\runtime\\llamacpp\\llama-server.exe\n      -m C:\\Users\\melet\\Documents\\Professional-Alignment-System-PAS-\\runtime\\models\\deepseek-r1-distill-qwen-7b-q4_k_m.gguf\n      --host 127.0.0.1\n      --port ${PORT}\n      -ngl 99\n      -c 8192\n      --no-mmap\n    proxy: http://127.0.0.1:${PORT}\n    ttl: 600\n",
+          "notes": "Los nombres de modelo se mantienen identicos a Ollama ('qwen2.5-coder:7b', 'deepseek-r1:7b') para que el cliente no cambie. -ngl 99 = todas las capas a GPU. ttl 600s = descarga el modelo si no se usa por 10 min."
+        }
+      ],
+      "acceptance": ["config.yaml creado y valido en sintaxis YAML."]
+    },
+
+    {
+      "id": "phase-5-launcher-script",
+      "goal": "Script .bat que arranque llama-swap como punto unico de entrada en puerto 8080.",
+      "steps": [
+        {
+          "action": "write_file",
+          "path": "runtime\\start_pas_inference.bat",
+          "content": "@echo off\r\ncd /d %~dp0llamaswap\r\necho Iniciando llama-swap en http://localhost:8080 ...\r\nllama-swap.exe --config config.yaml --listen 127.0.0.1:8080\r\n"
+        },
+        {
+          "action": "shell",
+          "command": "start \"\" runtime\\start_pas_inference.bat",
+          "purpose": "Arrancar en background. Esperar 5 segundos y hacer health check."
+        },
+        {
+          "action": "shell",
+          "command": "curl -s http://localhost:8080/v1/models",
+          "expected": "JSON listando 'qwen2.5-coder:7b' y 'deepseek-r1:7b'.",
+          "on_failure": "Leer logs de llama-swap en la consola del bat. NO continuar hasta que /v1/models responda."
+        }
+      ],
+      "acceptance": ["GET /v1/models devuelve los dos modelos esperados."]
+    },
+
+    {
+      "id": "phase-6-gpu-verification",
+      "goal": "Confirmar que la inferencia esta usando la GPU, NO la CPU.",
+      "steps": [
+        {
+          "action": "shell",
+          "command": "curl -s -X POST http://localhost:8080/v1/chat/completions -H \"Content-Type: application/json\" -d \"{\\\"model\\\":\\\"qwen2.5-coder:7b\\\",\\\"messages\\\":[{\\\"role\\\":\\\"user\\\",\\\"content\\\":\\\"Escribe una funcion python que invierta una cadena.\\\"}],\\\"max_tokens\\\":200}\"",
+          "purpose": "Forzar carga de qwen y generar tokens."
+        },
+        {
+          "action": "manual_check",
+          "instruction": "Pedir al usuario que abra Task Manager > Performance > GPU y confirme que durante la generacion el uso de GPU sube y la VRAM dedicada esta en ~5 GB. Alternativamente, ejecutar 'wmic path Win32_VideoController get name, AdapterRAM' mientras corre.",
+          "fallback": "Si la GPU sigue en 0%: revisar los logs de llama-server buscando la linea 'using Vulkan backend'. Si dice 'CPU only', el binario descargado no fue el de Vulkan -> volver a phase-2."
+        }
+      ],
+      "acceptance": [
+        "Log de llama-server muestra 'Vulkan' y 'offloaded XX/XX layers to GPU'.",
+        "Task Manager confirma uso de GPU durante la inferencia."
+      ]
+    },
+
+    {
+      "id": "phase-7-python-shim",
+      "goal": "Crear un modulo de compatibilidad que reemplace 'import ollama' sin cambiar el resto del codigo.",
+      "steps": [
+        {
+          "action": "write_file",
+          "path": "pas_inference_client.py",
+          "content": "\"\"\"\nShim de compatibilidad: expone una API parecida a `ollama` pero habla\ncon llama-swap (OpenAI-compatible) en localhost:8080.\n\nUso en codigo existente:\n    # antes:\n    # import ollama\n    # r = ollama.chat(model='qwen2.5-coder:7b', messages=[...])\n\n    # despues:\n    import pas_inference_client as ollama\n    r = ollama.chat(model='qwen2.5-coder:7b', messages=[...])\n\nFlag de rollback: si la variable de entorno PAS_USE_OLLAMA=1, hace\npassthrough al paquete ollama original.\n\"\"\"\nfrom __future__ import annotations\n\nimport os\nimport json\nimport urllib.request\nimport urllib.error\nfrom typing import Iterable, Iterator\n\n_ENDPOINT = os.environ.get(\"PAS_INFERENCE_URL\", \"http://localhost:8080/v1/chat/completions\")\n_TIMEOUT = float(os.environ.get(\"PAS_INFERENCE_TIMEOUT\", \"600\"))\n_USE_OLLAMA = os.environ.get(\"PAS_USE_OLLAMA\", \"0\") == \"1\"\n\nif _USE_OLLAMA:\n    # Passthrough al paquete oficial — rollback rapido.\n    from ollama import chat, ChatResponse  # type: ignore  # noqa: F401\nelse:\n    def _post(payload: dict) -> dict:\n        req = urllib.request.Request(\n            _ENDPOINT,\n            data=json.dumps(payload).encode(\"utf-8\"),\n            headers={\"Content-Type\": \"application/json\"},\n            method=\"POST\",\n        )\n        try:\n            with urllib.request.urlopen(req, timeout=_TIMEOUT) as resp:\n                return json.loads(resp.read().decode(\"utf-8\"))\n        except urllib.error.HTTPError as e:\n            raise RuntimeError(f\"Inference HTTP {e.code}: {e.read().decode('utf-8', 'replace')}\") from e\n\n    def chat(model: str, messages: list[dict], stream: bool = False, options: dict | None = None, **kwargs):\n        \"\"\"\n        Mimica ollama.chat(). Devuelve un dict con la misma forma minima\n        que el codigo PAS espera: r['message']['content'].\n        \"\"\"\n        if stream:\n            return _chat_stream(model, messages, options, **kwargs)\n\n        payload = {\n            \"model\": model,\n            \"messages\": messages,\n            \"stream\": False,\n        }\n        if options:\n            # Mapear opciones comunes Ollama -> OpenAI\n            if \"temperature\" in options:\n                payload[\"temperature\"] = options[\"temperature\"]\n            if \"num_predict\" in options:\n                payload[\"max_tokens\"] = options[\"num_predict\"]\n            if \"top_p\" in options:\n                payload[\"top_p\"] = options[\"top_p\"]\n\n        data = _post(payload)\n        choice = data[\"choices\"][0]\n        return {\n            \"model\": data.get(\"model\", model),\n            \"message\": {\n                \"role\": choice[\"message\"][\"role\"],\n                \"content\": choice[\"message\"][\"content\"],\n            },\n            \"done\": True,\n            \"done_reason\": choice.get(\"finish_reason\", \"stop\"),\n        }\n\n    def _chat_stream(model: str, messages: list[dict], options: dict | None, **kwargs) -> Iterator[dict]:\n        payload = {\n            \"model\": model,\n            \"messages\": messages,\n            \"stream\": True,\n        }\n        if options:\n            if \"temperature\" in options:\n                payload[\"temperature\"] = options[\"temperature\"]\n            if \"num_predict\" in options:\n                payload[\"max_tokens\"] = options[\"num_predict\"]\n\n        req = urllib.request.Request(\n            _ENDPOINT,\n            data=json.dumps(payload).encode(\"utf-8\"),\n            headers={\"Content-Type\": \"application/json\"},\n            method=\"POST\",\n        )\n        with urllib.request.urlopen(req, timeout=_TIMEOUT) as resp:\n            for raw in resp:\n                line = raw.decode(\"utf-8\").strip()\n                if not line or not line.startswith(\"data:\"):\n                    continue\n                payload_str = line[len(\"data:\"):].strip()\n                if payload_str == \"[DONE]\":\n                    break\n                try:\n                    chunk = json.loads(payload_str)\n                except json.JSONDecodeError:\n                    continue\n                delta = chunk[\"choices\"][0].get(\"delta\", {})\n                yield {\n                    \"model\": chunk.get(\"model\", model),\n                    \"message\": {\n                        \"role\": delta.get(\"role\", \"assistant\"),\n                        \"content\": delta.get(\"content\", \"\"),\n                    },\n                    \"done\": False,\n                }\n            yield {\"model\": model, \"message\": {\"role\": \"assistant\", \"content\": \"\"}, \"done\": True}\n"
+        },
+        {
+          "action": "write_file",
+          "path": "tests\\test_pas_inference_client.py",
+          "content": "\"\"\"Smoke test del shim. Requiere llama-swap arrancado en 8080.\"\"\"\nimport pas_inference_client as ic\n\n\ndef test_chat_qwen_basic():\n    r = ic.chat(\n        model=\"qwen2.5-coder:7b\",\n        messages=[{\"role\": \"user\", \"content\": \"Say only the word: pong\"}],\n        options={\"num_predict\": 10, \"temperature\": 0.0},\n    )\n    assert r[\"done\"] is True\n    assert \"message\" in r and \"content\" in r[\"message\"]\n    assert len(r[\"message\"][\"content\"]) > 0\n\n\ndef test_chat_deepseek_basic():\n    r = ic.chat(\n        model=\"deepseek-r1:7b\",\n        messages=[{\"role\": \"user\", \"content\": \"Reply with the single word OK.\"}],\n        options={\"num_predict\": 20, \"temperature\": 0.0},\n    )\n    assert r[\"done\"] is True\n    assert len(r[\"message\"][\"content\"]) > 0\n\n\nif __name__ == \"__main__\":\n    test_chat_qwen_basic()\n    print(\"qwen OK\")\n    test_chat_deepseek_basic()\n    print(\"deepseek OK\")\n"
+        },
+        {
+          "action": "shell",
+          "command": "python tests\\test_pas_inference_client.py",
+          "expected": "Imprime 'qwen OK' y 'deepseek OK'. Entre las dos llamadas hay un parado perceptible — es llama-swap descargando un modelo y cargando el otro. Eso es esperado y correcto."
+        }
+      ],
+      "acceptance": [
+        "Los dos tests pasan.",
+        "Durante el segundo test, la VRAM se libera y se vuelve a llenar (swap visible en Task Manager)."
+      ]
+    },
+
+    {
+      "id": "phase-8-integrate-pas",
+      "goal": "Reemplazar 'import ollama' por el shim en los archivos identificados en phase-1.",
+      "steps": [
+        {
+          "action": "for_each_file",
+          "from": "phase-1 grep results",
+          "edit": "Cambiar 'import ollama' por 'import pas_inference_client as ollama'. NO tocar las llamadas ollama.chat(...) en si — la firma es identica."
+        },
+        {
+          "action": "run_pas_smoke_test",
+          "instruction": "Ejecutar el entrypoint principal de PAS con un caso minimo end-to-end. Si PAS tiene un script de prueba o un comando 'demo', usar ese. Si no, pedir al usuario un caso concreto."
+        }
+      ],
+      "acceptance": [
+        "PAS arranca y responde sin errores.",
+        "El usuario confirma que la latencia bajo significativamente vs. la version Ollama+CPU."
+      ]
+    }
+  ],
+
+  "rollback_plan": {
+    "trigger": "Cualquier fallo no recuperable, o el usuario decide volver a Ollama.",
+    "steps": [
+      "set PAS_USE_OLLAMA=1 (variable de entorno) -> el shim hace passthrough al paquete ollama original sin cambiar el codigo.",
+      "Alternativamente, revertir el commit que cambio los 'import ollama'.",
+      "El directorio runtime\\ se puede borrar entero sin afectar el codigo PAS."
+    ]
+  },
+
+  "final_report_to_user": {
+    "must_include": [
+      "Lista de archivos modificados.",
+      "Resultado de phase-6 (uso de GPU confirmado si/no, con evidencia).",
+      "Tiempo aproximado de primera respuesta para cada modelo (tokens/seg si es posible).",
+      "Cualquier paso que requirio intervencion manual.",
+      "Tamano de VRAM ocupado por cada modelo cuando esta cargado."
+    ]
+  },
+
+  "guardrails_for_qwen": [
+    "Si algun comando shell falla, NO inventes una alternativa silenciosamente. Reporta y pregunta.",
+    "NO descargues quantizaciones distintas a Q4_K_M sin permiso (afecta calidad).",
+    "NO levantes el servidor en 0.0.0.0; solo 127.0.0.1.",
+    "NO modifiques codigo PAS fuera de los archivos identificados en phase-1.",
+    "Si phase-6 falla (GPU no se usa), DETENTE y reporta. No tiene sentido seguir."
+  ]
+}

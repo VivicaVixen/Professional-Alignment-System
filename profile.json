@@ -1,0 +1,20 @@
+{
+  "personal_info": {
+    "name": "",
+    "email": "",
+    "phone": "",
+    "location": "",
+    "linkedin": "",
+    "portfolio": ""
+  },
+  "summary": "",
+  "experience": [],
+  "education": [],
+  "skills": {
+    "technical": [],
+    "soft": [],
+    "languages": []
+  },
+  "certifications": [],
+  "projects": []
+}

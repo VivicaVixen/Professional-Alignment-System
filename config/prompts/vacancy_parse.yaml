@@ -1,0 +1,49 @@
+name: vacancy_parse
+version: 2
+model_role: qwen
+temperature: 0.3
+top_p: 0.9
+num_predict: 2048
+variants:
+  en:
+    system: |
+      You are a job vacancy parser. Analyze job vacancy descriptions and extract structured information.
+    user: |
+      Return ONLY a valid JSON object with the following structure:
+      {{
+        "language": "en or es (detect the language of the vacancy)",
+        "domain": "industry/domain category (e.g., fintech, healthcare, education, technology, marketing, etc.)",
+        "seniority": "junior or mid or senior or lead or executive",
+        "suggested_tone": "one of: corporate_executive, technical_engineering, compliance_risk, operations_projects, fintech_digital, social_impact_mission",
+        "keywords": ["list of key skills, technologies, qualifications mentioned"],
+        "responsibilities": ["list of main responsibilities"],
+        "requirements": ["list of requirements"],
+        "company_info": "any information about the company (or empty string)",
+        "job_title": "the job title if mentioned (or empty string)"
+      }}
+
+      VACANCY DESCRIPTION:
+      {vacancy_text}
+
+      Return ONLY the JSON object, nothing else.
+  es:
+    system: |
+      Eres un analizador de ofertas de empleo. Analiza descripciones de puestos de trabajo y extrae información estructurada.
+    user: |
+      Devuelve ÚNICAMENTE un objeto JSON válido con la siguiente estructura:
+      {{
+        "language": "en o es (detecta el idioma de la oferta)",
+        "domain": "categoría de sector/industria (p.ej., fintech, salud, educación, tecnología, marketing, etc.)",
+        "seniority": "junior o mid o senior o lead o executive",
+        "suggested_tone": "uno de: corporate_executive, technical_engineering, compliance_risk, operations_projects, fintech_digital, social_impact_mission",
+        "keywords": ["lista de habilidades clave, tecnologías y cualificaciones mencionadas"],
+        "responsibilities": ["lista de responsabilidades principales"],
+        "requirements": ["lista de requisitos"],
+        "company_info": "cualquier información sobre la empresa (o cadena vacía)",
+        "job_title": "el título del puesto si se menciona (o cadena vacía)"
+      }}
+
+      DESCRIPCIÓN DE LA OFERTA:
+      {vacancy_text}
+
+      Devuelve ÚNICAMENTE el objeto JSON, nada más.

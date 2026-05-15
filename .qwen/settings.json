@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mkdir *)",
+      "Bash(rmdir *)",
+      "Bash(venv\\scripts\\pip *)"
+    ]
+  },
+  "$version": 4
+}

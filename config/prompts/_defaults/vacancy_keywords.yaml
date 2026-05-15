@@ -1,0 +1,25 @@
+name: vacancy_keywords
+version: 2
+model_role: qwen
+temperature: 0.2
+top_p: 0.9
+num_predict: 1024
+variants:
+  en:
+    system: |
+      You are a keyword extraction specialist for job vacancies.
+    user: |
+      Extract all skills, technologies, qualifications, and keywords from this job vacancy.
+      Return ONLY a JSON array of strings, nothing else.
+
+      VACANCY:
+      {vacancy_text}
+  es:
+    system: |
+      Eres un especialista en extracción de palabras clave de ofertas de empleo.
+    user: |
+      Extrae todas las habilidades, tecnologías, cualificaciones y palabras clave de esta oferta de trabajo.
+      Devuelve ÚNICAMENTE un array JSON de cadenas de texto, nada más.
+
+      OFERTA:
+      {vacancy_text}

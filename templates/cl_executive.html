@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Cover Letter - {{ name }}</title>
+    <style>
+        body {
+            font-family: 'Georgia', serif;
+            line-height: 1.8;
+            color: #2c3e50;
+            max-width: 700px;
+            margin: 0 auto;
+            padding: 50px;
+        }
+        .header {
+            margin-bottom: 40px;
+        }
+        .sender-info {
+            text-align: right;
+            font-size: 14px;
+            color: #7f8c8d;
+        }
+        .date {
+            margin: 20px 0;
+            font-style: italic;
+        }
+        .salutation {
+            margin-bottom: 20px;
+        }
+        .body-paragraph {
+            text-align: justify;
+            margin-bottom: 15px;
+            text-indent: 30px;
+        }
+        .closing {
+            margin-top: 30px;
+        }
+        .signature {
+            margin-top: 20px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="sender-info">
+            <p>{{ name }}</p>
+            {% if email %}<p>{{ email }}</p>{% endif %}
+            {% if phone %}<p>{{ phone }}</p>{% endif %}
+            {% if location %}<p>{{ location }}</p>{% endif %}
+        </div>
+        <div class="date">
+            <p>{{ date }}</p>
+        </div>
+    </div>
+
+    <div class="salutation">
+        <p>Dear Hiring Manager,</p>
+    </div>
+
+    <div class="letter-body">
+        {% for paragraph in paragraphs %}
+        <p class="body-paragraph">{{ paragraph }}</p>
+        {% endfor %}
+    </div>
+
+    <div class="closing">
+        <p>Thank you for considering my application. I look forward to the opportunity to discuss how my experience and skills align with your team's needs.</p>
+        <p>Sincerely,</p>
+        <div class="signature">
+            <p>{{ name }}</p>
+        </div>
+    </div>
+</body>
+</html>

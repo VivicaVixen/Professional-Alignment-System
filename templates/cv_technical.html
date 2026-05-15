@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ name }} - Technical CV</title>
+    <style>
+        body {
+            font-family: 'Consolas', 'Courier New', monospace;
+            line-height: 1.5;
+            color: #333;
+            max-width: 850px;
+            margin: 0 auto;
+            padding: 40px;
+            background: #f5f5f5;
+        }
+        .cv-container {
+            background: white;
+            padding: 40px;
+            border: 1px solid #ddd;
+        }
+        h1 {
+            font-size: 28px;
+            color: #0d7377;
+            font-family: 'Segoe UI', sans-serif;
+            border-bottom: 2px solid #0d7377;
+            padding-bottom: 10px;
+        }
+        h2 {
+            font-size: 18px;
+            color: #0d7377;
+            font-family: 'Segoe UI', sans-serif;
+            margin-top: 25px;
+            border-bottom: 1px dashed #0d7377;
+            padding-bottom: 5px;
+        }
+        h3 {
+            font-size: 15px;
+            color: #333;
+            margin: 12px 0 5px 0;
+        }
+        .contact-info {
+            font-size: 13px;
+            color: #666;
+            margin-bottom: 20px;
+            padding: 10px;
+            background: #f9f9f9;
+            border-left: 3px solid #0d7377;
+        }
+        .section {
+            margin-bottom: 20px;
+        }
+        .experience-item {
+            margin-bottom: 18px;
+            padding: 10px;
+            background: #fafafa;
+            border-left: 3px solid #0d7377;
+        }
+        .company {
+            color: #666;
+        }
+        .date {
+            color: #999;
+            font-size: 12px;
+        }
+        ul {
+            margin: 8px 0;
+            padding-left: 20px;
+        }
+        li {
+            margin-bottom: 4px;
+        }
+        .skills-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        .skills-table td {
+            padding: 8px;
+            border: 1px solid #ddd;
+            font-size: 13px;
+        }
+        .skills-table th {
+            background: #0d7377;
+            color: white;
+            padding: 8px;
+            text-align: left;
+            font-family: 'Segoe UI', sans-serif;
+        }
+        code {
+            background: #f0f0f0;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="cv-container">
+        <h1>{{ name }}</h1>
+        
+        <div class="contact-info">
+            {% if email %}Email: {{ email }} | {% endif %}
+            {% if phone %}Phone: {{ phone }} | {% endif %}
+            {% if location %}Location: {{ location }} | {% endif %}
+            {% if linkedin %}LinkedIn: {{ linkedin }} | {% endif %}
+            {% if portfolio %}Portfolio: {{ portfolio }}{% endif %}
+        </div>
+
+        {% if summary %}
+        <div class="section">
+            <h2>Technical Summary</h2>
+            <p>{{ summary }}</p>
+        </div>
+        {% endif %}
+
+        {% if experience %}
+        <div class="section">
+            <h2>Technical Experience</h2>
+            {% for exp in experience %}
+            <div class="experience-item">
+                <h3>{{ exp.title }}</h3>
+                <p><span class="company">{{ exp.company }}</span> | <span class="date">{{ exp.start }} - {% if exp.end %}{{ exp.end }}{% else %}Present{% endif %}</span></p>
+                {% if exp.achievements %}
+                <ul>
+                    {% for achievement in exp.achievements %}
+                    <li>{{ achievement }}</li>
+                    {% endfor %}
+                </ul>
+                {% endif %}
+                {% if exp.skills_used %}
+                <p><strong>Technologies:</strong> {% for skill in exp.skills_used %}<code>{{ skill }}</code>{% if not loop.last %} {% endif %}{% endfor %}</p>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {% if skills %}
+        <div class="section">
+            <h2>Technical Stack</h2>
+            <table class="skills-table">
+                {% if skills.technical %}
+                <tr>
+                    <th>Languages & Frameworks</th>
+                    <td>{{ skills.technical | join(', ') }}</td>
+                </tr>
+                {% endif %}
+                {% if skills.soft %}
+                <tr>
+                    <th>Methodologies</th>
+                    <td>{{ skills.soft | join(', ') }}</td>
+                </tr>
+                {% endif %}
+            </table>
+            {% if skills.languages %}
+            <h3>Human Languages</h3>
+            {% for lang in skills.languages %}
+            <span>{{ lang.language }}: {{ lang.level }}{% if not loop.last %} | {% endif %}</span>
+            {% endfor %}
+            {% endif %}
+        </div>
+        {% endif %}
+
+        {% if education %}
+        <div class="section">
+            <h2>Education</h2>
+            {% for edu in education %}
+            <p><strong>{{ edu.degree }}</strong> - {{ edu.institution }} ({{ edu.year }})</p>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {% if certifications %}
+        <div class="section">
+            <h2>Certifications</h2>
+            {% for cert in certifications %}
+            <p><code>{{ cert.name }}</code> - {{ cert.issuer }} ({{ cert.year }})</p>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {% if projects %}
+        <div class="section">
+            <h2>Technical Projects</h2>
+            {% for proj in projects %}
+            <div class="experience-item">
+                <h3>{{ proj.name }}{% if proj.url %} - <a href="{{ proj.url }}">{{ proj.url }}</a>{% endif %}</h3>
+                {% if proj.description %}<p>{{ proj.description }}</p>{% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+</body>
+</html>

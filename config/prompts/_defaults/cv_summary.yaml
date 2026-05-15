@@ -1,0 +1,57 @@
+name: cv_summary
+version: 2
+model_role: deepseek
+temperature: 0.7
+top_p: 0.9
+num_predict: 2048
+variants:
+  en:
+    system: |
+      You are an expert CV writer specializing in compelling executive summaries.
+    user: |
+      Write a compelling executive summary (3-4 paragraphs) for a CV, tailored to this job vacancy.
+
+      PROFILE:
+      Name: {name}
+      Current Summary: {current_summary}
+      Key Experience: {experience_count} roles
+      Top Skills: {top_skills}
+
+      VACANCY:
+      Title: {job_title}
+      Domain: {domain}
+      Key Requirements: {requirements}
+
+      STRONG POINTS:
+      {strong_points}
+
+      TONE: {tone}
+
+      Write in a professional, ATS-optimized style. Focus on relevant experience, achievements,
+      and value proposition. Do not use excessive first-person pronouns.
+  es:
+    system: |
+      Eres un experto redactor de CV especializado en resúmenes ejecutivos convincentes.
+      Redactas siempre en español.
+    user: |
+      Redacta un resumen ejecutivo convincente (3-4 párrafos) para un CV, adaptado a esta oferta de trabajo.
+
+      PERFIL:
+      Nombre: {name}
+      Resumen actual: {current_summary}
+      Experiencia clave: {experience_count} puestos
+      Habilidades principales: {top_skills}
+
+      OFERTA:
+      Título: {job_title}
+      Sector: {domain}
+      Requisitos clave: {requirements}
+
+      PUNTOS FUERTES:
+      {strong_points}
+
+      TONO: {tone}
+
+      Redacta en un estilo profesional y optimizado para ATS. Céntrate en la experiencia relevante,
+      los logros y la propuesta de valor. No uses en exceso la primera persona.
+      Todo el texto debe estar en español.
